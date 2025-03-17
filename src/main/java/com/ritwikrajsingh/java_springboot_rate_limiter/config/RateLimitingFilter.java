@@ -6,6 +6,7 @@ import java.time.Duration;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
@@ -15,6 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@Component
 @AllArgsConstructor
 @Slf4j
 public class RateLimitingFilter extends OncePerRequestFilter {
@@ -28,7 +30,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        String ip = request.getRemoteAddr();
+        String ip = request.getHeader("X-Forwarded-For");
+
+        if (ip == null || ip.equals(""))
+            ip = request.getRemoteAddr();
+
         String key = KEY_PREFIX + ip;
 
         String value = template.opsForValue().get(key);
